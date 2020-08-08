@@ -7,27 +7,62 @@ import 'package:smart_meter/Models/weekModel.dart';
 import 'package:smart_meter/Services/Database.dart';
 import 'package:smart_meter/Services/auth.dart';
 import 'package:charts_flutter/flutter.dart' as charts;
+import 'package:smart_meter/layouts/Home/graph.dart';
 
 class Home extends StatefulWidget {
+
   @override
   _HomeState createState() => _HomeState();
 }
-
-class ClicksPerYear {
-  final String year;
-  final int value;
-  final charts.Color color;
-
-  ClicksPerYear(this.year, this.value, Color color)
-      : this.color = charts.Color(
-            r: color.red, g: color.green, b: color.blue, a: color.alpha);
-}
-
 DateTime date = DateTime.now();
 var weekstart_val = 0;
 var weekend_val = 7;
 
 class _HomeState extends State<Home> {
+  void _showRattingBar(String data,total) {
+    showModalBottomSheet(
+        isDismissible: true,
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+        context: context,
+        builder: (context) {
+          return Container(
+            decoration: BoxDecoration(
+              border: Border.all(
+                color: Colors.white,
+              ),
+              color: Colors.white,
+              borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(30),
+                  topRight: Radius.circular(30)),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Column(
+                children: [
+                  Text(
+                    'Info',
+                    style: TextStyle(
+                        fontSize: 30.0,
+                        fontWeight: FontWeight.bold,
+                        fontFamily: 'Poppins'),
+                  ),
+                  SizedBox(
+                    height: 20,
+                  ),
+                  SizedBox(
+                    height: 400,
+                    child: dayGraph(
+                      day: data,
+                      total:total,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        });
+  }
   var weekstart =
       date.subtract(Duration(days: date.weekday - weekstart_val)).day;
   var weekend = date.subtract(Duration(days: date.weekday - weekend_val)).day;
@@ -42,8 +77,6 @@ class _HomeState extends State<Home> {
         .collection('Readings')
         .document(date.year.toString() + '.' + date.day.toString())
         .get();
-    var b=a.data;
-    print(b);
     List<WeekModel> weekdata = [];
     print(weekstart.toString() + '-' + weekend.toString());
     var weekdays = ['sun', 'mon', 'tue', 'wed', 'thur', 'fri', 'sat'];
@@ -69,6 +102,19 @@ class _HomeState extends State<Home> {
       animate: true,
       barRendererDecorator: new charts.BarLabelDecorator<String>(),
       domainAxis: new charts.OrdinalAxisSpec(),
+      selectionModels: [
+        charts.SelectionModelConfig(
+          changedListener: (charts.SelectionModel model){
+            if(model.hasDatumSelection) {
+              print(model.selectedSeries[0].domainFn(
+                  model.selectedDatum[0].index));
+              _showRattingBar(model.selectedSeries[0].domainFn(
+                  model.selectedDatum[0].index),model.selectedSeries[0].measureFn(
+                  model.selectedDatum[0].index));
+            }
+          }
+        )
+      ],
     );
     chartWidget1 = Padding(
       padding: EdgeInsets.all(32.0),
