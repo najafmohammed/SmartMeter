@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "480370262174",
+    "firebase_url": "https://smart-monitor-7efb5.firebaseio.com",
+    "project_id": "smart-monitor-7efb5",
+    "storage_bucket": "smart-monitor-7efb5.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:480370262174:android:23775ad4122ef46163fb8f",
+        "android_client_info": {
+          "package_name": "com.interval.smart_meter_app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "480370262174-unnd7v13eqo77hjp3v89uf4dne6cvm4o.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAaGifLfAQDJ1u-Oa9PZZ2RArrVKY6-r2E"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "480370262174-unnd7v13eqo77hjp3v89uf4dne6cvm4o.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
