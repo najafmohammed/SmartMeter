@@ -2,7 +2,6 @@ import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
 class DatabaseService {
   final String uid;
-
   //get the unique uid of the user
   DatabaseService({this.uid});
 
@@ -18,14 +17,22 @@ class DatabaseService {
     final _random = new Random();
     int next(int min, int max) => min + _random.nextInt(max - min);
     List value=[];
-    for (int i=0;i<24;i++){
-    value.add(next(0, 9));
-    }
+int monthTotal=0;
+    int dayTotal=0;
     for(int i=1;i<32;i++){
+      for (int j=0;j<24;j++){
+        int temp=next(0, 9);
+        monthTotal+=temp;
+        dayTotal+=temp;
+        value.add(temp);
+      }
       await userPreferences.document(uid).collection('Readings').document(
           yearMonth).setData({
-        i.toString():value,
+        i.toString():{'value':value,'daytotal':dayTotal},
+        'total':monthTotal,
       },merge: true);
+      dayTotal=0;
+      value.clear();
     }
   }
 

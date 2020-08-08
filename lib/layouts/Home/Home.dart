@@ -4,9 +4,9 @@ import 'package:percent_indicator/percent_indicator.dart';
 import 'package:provider/provider.dart';
 import 'package:smart_meter/Models/users.dart';
 import 'package:smart_meter/Models/weekModel.dart';
+import 'package:smart_meter/Services/Database.dart';
 import 'package:smart_meter/Services/auth.dart';
 import 'package:charts_flutter/flutter.dart' as charts;
-import 'package:smart_meter/Shared/loading.dart';
 
 class Home extends StatefulWidget {
   @override
@@ -31,200 +31,171 @@ class _HomeState extends State<Home> {
   var weekstart =
       date.subtract(Duration(days: date.weekday - weekstart_val)).day;
   var weekend = date.subtract(Duration(days: date.weekday - weekend_val)).day;
-
+  var chartWidget1;
+  String currentUsage='';
   Future getweekdata() async {
-    final user = Provider.of<User>(context, listen: false);
+    final user = Provider.of<User>(context,listen: false);
     final CollectionReference userPreferences =
         Firestore.instance.collection('Users');
     var a = await userPreferences
         .document(user.uid)
         .collection('Readings')
-        .document(date.year.toString() + '.0' + date.day.toString())
+        .document(date.year.toString() + '.' + date.day.toString())
         .get();
-    print(a.data);
-    return a;
-  }
-
-  List<WeekModel> weekValue() {
+    var b=a.data;
+    print(b);
     List<WeekModel> weekdata = [];
     print(weekstart.toString() + '-' + weekend.toString());
     var weekdays = ['sun', 'mon', 'tue', 'wed', 'thur', 'fri', 'sat'];
     for (int i = weekstart, j = 0; i < weekend; i++, j++) {
-      weekdata.add(WeekModel(weekdays[j], 2, Colors.blue));
+      weekdata.add(WeekModel(weekdays[j], a.data[i.toString()]['daytotal'], Colors.blue));
     }
-    return weekdata;
-  }
-
-  WeekModel weekdata;
-
-  @override
-  void initState() {
-    super.initState();
-    List<WeekModel> list = weekValue();
-    print(list.length);
-    getweekdata();
-  }
-  final AuthService _auth = AuthService();
-
-  @override
-  Widget build(BuildContext context) {
-//    var series1 = [
-//      charts.Series(
-//          domainFn: (WeekModel clickData, _) => clickData.dayOfWeek,
-//          measureFn: (WeekModel clickData, _) => clickData.value,
-//          colorFn: (WeekModel clickData, _) => clickData.color,
-//          id: 'Clicks',
-//          data: ,
-//          labelAccessorFn: (WeekModel clickData, _) => clickData.value.toString()
-//      ),
-//    ];
-    var data = [
-      ClicksPerYear('sun', 12, Colors.blue),
-      ClicksPerYear('mon', 42, Colors.blue),
-      ClicksPerYear('tue', 23, Colors.blue),
-      ClicksPerYear('wed', 23, Colors.blue),
-      ClicksPerYear('thur', 42, Colors.blue),
-      ClicksPerYear('fri', 41, Colors.blue),
-      ClicksPerYear('sat', 42, Colors.blue),
-    ];
-    var series = [
+    setState(() {
+      currentUsage=a.data[date.day.toString()]['daytotal'].toString();
+    });
+    print(weekdata);
+    var series1 = [
       charts.Series(
-          domainFn: (ClicksPerYear clickData, _) => clickData.year,
-          measureFn: (ClicksPerYear clickData, _) => clickData.value,
-          colorFn: (ClicksPerYear clickData, _) => clickData.color,
+          domainFn: (WeekModel clickData, _) => clickData.dayOfWeek,
+          measureFn: (WeekModel clickData, _) => clickData.value,
+          colorFn: (WeekModel clickData, _) => clickData.color,
           id: 'Clicks',
-          data: data,
-          labelAccessorFn: (ClicksPerYear clickData, _) =>
-              clickData.value.toString()),
+          data: weekdata,
+          labelAccessorFn: (WeekModel clickData, _) => clickData.value.toString()
+      ),
     ];
-    var chart = charts.BarChart(
-      series,
+    var chart1 = charts.BarChart(
+      series1,
       animate: true,
       barRendererDecorator: new charts.BarLabelDecorator<String>(),
       domainAxis: new charts.OrdinalAxisSpec(),
     );
-    var chartWidget = Padding(
+    chartWidget1 = Padding(
       padding: EdgeInsets.all(32.0),
       child: SizedBox(
         height: 200.0,
-        child: chart,
+        child: chart1,
       ),
     );
-    return new FutureBuilder<dynamic>(
-        future: getweekdata(), // a Future<String> or null
-        builder: (BuildContext context, AsyncSnapshot<dynamic> snapshot) {
-          switch (snapshot.connectionState) {
-            case ConnectionState.none:
-              return new Text('error getting data');
-            case ConnectionState.waiting:
-              return Loading();
-            default:
-              if (snapshot.hasError) {
-                return new Text('Error: ${snapshot.error}');
-              }else {
-                return Scaffold(
-                  appBar: AppBar(
-                    title: Text('Smart Meter'),
-                    actions: <Widget>[
-                      FlatButton.icon(
-                          onPressed: () async {
-                            await _auth.signout();
-                          },
-                          icon: Icon(
-                            Icons.exit_to_app,
-                            color: Colors.white,
+    return chartWidget1;
+  }
+//  void weekValue(DocumentSnapshot value) {
+//  }
+
+  WeekModel weekdata;
+  var weekvaluieass;
+  List<WeekModel> list;
+  @override
+  void initState() {
+    super.initState();
+    chartWidget1=getweekdata();
+  }
+
+  final AuthService _auth = AuthService();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Smart Meter'),
+        actions: <Widget>[
+          FlatButton.icon(
+              onPressed: () async {
+                await _auth.signout();
+              },
+              icon: Icon(
+                Icons.exit_to_app,
+                color: Colors.white,
+              ),
+              label: Text('')),
+        ],
+        centerTitle: true,
+      ),
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            Center(
+              child: Text(
+                'Today',
+                style: TextStyle(
+                    fontFamily: 'poppins',
+                    fontWeight: FontWeight.w400,
+                    fontSize: 17),
+              ),
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                Icon(Icons.chevron_left),
+                Center(
+                  child: CircularPercentIndicator(
+                    radius: 150.0,
+                    lineWidth: 3.0,
+                    progressColor: Colors.blue,
+                    percent: 0.9,
+                    center: CircleAvatar(
+                      radius: 70,
+                      backgroundColor: Colors.white,
+                      child: Column(
+                        children: [
+                          SizedBox(
+                            height: 30,
                           ),
-                          label: Text('')),
-                    ],
-                    centerTitle: true,
-                  ),
-                  body: SingleChildScrollView(
-                    child: Column(
-                      children: [
-                        Center(
-                          child: Text(
-                            'Today',
+                          Text(
+                            currentUsage,
                             style: TextStyle(
                                 fontFamily: 'poppins',
-                                fontWeight: FontWeight.w400,
-                                fontSize: 17),
+                                fontWeight: FontWeight.bold,
+                                fontSize: 25),
                           ),
-                        ),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          children: [
-                            Icon(Icons.chevron_left),
-                            Center(
-                              child: CircularPercentIndicator(
-                                radius: 150.0,
-                                lineWidth: 3.0,
-                                progressColor: Colors.blue,
-                                percent: 0.9,
-                                center: CircleAvatar(
-                                  radius: 70,
-                                  backgroundColor: Colors.white,
-                                  child: Column(
-                                    children: [
-                                      SizedBox(
-                                        height: 30,
-                                      ),
-                                      Text(
-                                        '730 kwh',
-                                        style: TextStyle(
-                                            fontFamily: 'poppins',
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 25),
-                                      ),
-                                      SizedBox(
-                                        height: 10,
-                                      ),
-                                      Text(
-                                        '₹300',
-                                        style: TextStyle(
-                                            fontFamily: 'poppins',
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 25),
-                                      )
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
-                            Icon(Icons.chevron_right),
-                          ],
-                        ), //end of main tab
-                        SizedBox(
-                          height: 20,
-                        ),
-                        RaisedButton.icon(
-                          onPressed: () {},
-                          icon: Icon(Icons.assistant),
-                          color: Colors.white,
-                          label: Text(
-                            'Try turning off the TV',
+                          SizedBox(
+                            height: 10,
+                          ),
+                          Text(
+                            '₹300',
                             style: TextStyle(
                                 fontFamily: 'poppins',
-                                fontWeight: FontWeight.w400,
-                                fontSize: 20),
-                          ),
-                        ),
-                        chartWidget,
-                      ],
+                                fontWeight: FontWeight.bold,
+                                fontSize: 25),
+                          )
+                        ],
+                      ),
                     ),
                   ),
-                  floatingActionButton: FloatingActionButton(
-                    onPressed: () async {
-//          final user = Provider.of<User>(context,listen: false);
-//         var a= await DatabaseService(uid: user.uid).Getdata('2020.08');
-//          print(a.data['1']);
-//          DatabaseService(uid: user.uid).setData('2020.08');
-                    },
-                    tooltip: 'Increment',
-                    child: Icon(Icons.add),
-                  ),
-                );
-              }
-          }
-        });
+                ),
+                Icon(Icons.chevron_right),
+              ],
+            ), //end of main tab
+            SizedBox(
+              height: 20,
+            ),
+            RaisedButton.icon(
+              onPressed: () {},
+              icon: Icon(Icons.assistant),
+              color: Colors.white,
+              label: Text(
+                'Try turning off the TV',
+                style: TextStyle(
+                    fontFamily: 'poppins',
+                    fontWeight: FontWeight.w400,
+                    fontSize: 20),
+              ),
+            ),
+            //chartWidget,
+            chartWidget1,
+          ],
+        ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () async {
+          final user = Provider.of<User>(context, listen: false);
+          //var a= await DatabaseService(uid: user.uid).Getdata('2020.8');
+          //print(a.data['1']);
+          await DatabaseService(uid: user.uid).setData('2020.8');
+        },
+        tooltip: 'Increment',
+        child: Icon(Icons.add),
+      ),
+    );
   }
 }
